@@ -24,8 +24,11 @@ import java.net.Socket;
 public class MainActivity extends AppCompatActivity
 {
     Thread Thread1 = null;
-    String SERVER_IP = "192.168.1.84";
-    int SERVER_PORT = 80;
+    Thread Thread2 = null;
+    String SERVER1_IP = "192.168.1.84";
+    int SERVER1_PORT = 80;
+    String SERVER2_IP = "192.168.1.89";
+    int SERVER2_PORT = 80;
 
     private ProgressBar progressBar;
     private TextView textViewProgress;
@@ -79,24 +82,27 @@ public class MainActivity extends AppCompatActivity
             switchPump.setOnCheckedChangeListener(this::onCheckedChanged);
         }
 
-        Thread1 = new Thread(new Thread1());
+        Thread1 = new Thread(new Thread1Server1());
         Thread1.start();
+
+        Thread2 = new Thread(new Thread1Server2());
+        Thread2.start();
     }
 
-    private PrintWriter output;
-    private BufferedReader input;
-    class Thread1 implements Runnable
+    private PrintWriter outputServer1;
+    private BufferedReader inputServer1;
+    class Thread1Server1 implements Runnable
     {
         public void run()
         {
             Socket socket;
             try
             {
-                socket = new Socket(SERVER_IP, SERVER_PORT);
-                output = new PrintWriter(socket.getOutputStream());
-                input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                new Thread(new Thread2()).start();
-                sendData("[R]");
+                socket = new Socket(SERVER1_IP, SERVER1_PORT);
+                outputServer1 = new PrintWriter(socket.getOutputStream());
+                inputServer1 = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                new Thread(new Thread2Server1()).start();
+                sendDataToServer1("[R]");
             }
             catch (IOException e)
             {
@@ -105,7 +111,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    class Thread2 implements Runnable
+    class Thread2Server1 implements Runnable
     {
         @Override
         public void run()
@@ -114,7 +120,7 @@ public class MainActivity extends AppCompatActivity
             {
                 try
                 {
-                    final String message = input.readLine();
+                    final String message = inputServer1.readLine();
                     if (message != null)
                     {
                         runOnUiThread(new Runnable()
@@ -128,7 +134,7 @@ public class MainActivity extends AppCompatActivity
                     }
                     else
                     {
-                        Thread1 = new Thread(new Thread1());
+                        Thread1 = new Thread(new Thread1Server1());
                         Thread1.start();
                         return;
                     }
@@ -141,25 +147,104 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    class Thread3 implements Runnable
+    class Thread3Server1 implements Runnable
     {
         private String message;
-        Thread3(String message)
+        Thread3Server1(String message)
         {
             this.message = message;
         }
         @Override
         public void run()
         {
-            output.write(message);
-            output.flush();
+            outputServer1.write(message);
+            outputServer1.flush();
         }
     }
 
-    private void sendData(String text)
+    private PrintWriter outputServer2;
+    private BufferedReader inputServer2;
+    class Thread1Server2 implements Runnable
+    {
+        public void run()
+        {
+            Socket socket;
+            try
+            {
+                socket = new Socket(SERVER2_IP, SERVER2_PORT);
+                outputServer2 = new PrintWriter(socket.getOutputStream());
+                inputServer2 = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                new Thread(new Thread2Server2()).start();
+                //sendDataToServer2("[R]");
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    class Thread2Server2 implements Runnable
+    {
+        @Override
+        public void run()
+        {
+            while (true)
+            {
+                try
+                {
+                    final String message = inputServer2.readLine();
+                    if (message != null)
+                    {
+                        runOnUiThread(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                processingInputStream(message);
+                            }
+                        });
+                    }
+                    else
+                    {
+                        Thread2 = new Thread(new Thread1Server2());
+                        Thread2.start();
+                        return;
+                    }
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    class Thread3Server2 implements Runnable
+    {
+        private String message;
+        Thread3Server2(String message)
+        {
+            this.message = message;
+        }
+        @Override
+        public void run()
+        {
+            outputServer2.write(message);
+            outputServer2.flush();
+        }
+    }
+
+    private void sendDataToServer1(String text)
     {
         text = text + "\n";
-        new Thread(new Thread3(text)).start();
+        new Thread(new Thread3Server1(text)).start();
+    }
+
+    private void sendDataToServer2(String text)
+    {
+        text = text + "\n";
+        new Thread(new Thread3Server2(text)).start();
     }
 
     private void processingInputStream(String text)
@@ -232,12 +317,12 @@ public class MainActivity extends AppCompatActivity
             switch (rb.getId())
             {
                 case R.id.radioButtonModeHome:
-                    sendData("[HOME]");     // home mode
+                    sendDataToServer1("[HOME]");     // home mode
                     switchPump.setClickable(false);
                     break;
 
                 case R.id.radioButtonModeStreet:
-                    sendData("[STREET]");       // street mode
+                    sendDataToServer1("[STREET]");       // street mode
                     switchPump.setClickable(true);
                     break;
 
@@ -251,21 +336,21 @@ public class MainActivity extends AppCompatActivity
     {
         if (isChecked)
         {
-            sendData("[PON]");      // pump on
+            sendDataToServer1("[PON]");      // pump on
         }
         if (!isChecked)
         {
-            sendData("[POFF]");     // pump off
+            sendDataToServer1("[POFF]");     // pump off
         }
     }
 
     public void onClickRefresh(View view)
     {
-        sendData("[R]");
+        sendDataToServer1("[R]");
     }
 
     public void onClickSwitchGeneralLightInAviary(View view)
     {
-        sendData("[GLAVIARY]");
+        sendDataToServer2("{GLAVIARY}");
     }
 }

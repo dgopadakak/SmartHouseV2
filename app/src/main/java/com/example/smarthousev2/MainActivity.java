@@ -1,6 +1,7 @@
 package com.example.smarthousev2;
 
 import android.annotation.SuppressLint;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -38,13 +39,17 @@ public class MainActivity extends AppCompatActivity
     private TextView textViewPumpTimeTitle;
     private TextView textViewPumpTimeNum;
     private Button refreshButton;
+
     private Button gLAviaryButton;
+    private Switch switchCHLight;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         TabHost tabHost = (TabHost) findViewById(R.id.tabHost);
         tabHost.setup();
@@ -77,9 +82,17 @@ public class MainActivity extends AppCompatActivity
         refreshButton = findViewById(R.id.buttonRefresh);
         gLAviaryButton = findViewById(R.id.buttonGLAviary);
 
+
+        switchCHLight = findViewById(R.id.switchCHLight);
+
         if (switchPump != null)
         {
-            switchPump.setOnCheckedChangeListener(this::onCheckedChanged);
+            switchPump.setOnCheckedChangeListener(this::onPumpCheckedChanged);
+        }
+
+        if (switchCHLight != null)
+        {
+            switchCHLight.setOnCheckedChangeListener(this::onCHLightCheckedChanged);
         }
 
         Thread1 = new Thread(new Thread1Server1());
@@ -175,7 +188,7 @@ public class MainActivity extends AppCompatActivity
                 outputServer2 = new PrintWriter(socket.getOutputStream());
                 inputServer2 = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 new Thread(new Thread2Server2()).start();
-                //sendDataToServer2("[R]");
+                sendDataToServer2("{R}");
             }
             catch (IOException e)
             {
@@ -301,6 +314,15 @@ public class MainActivity extends AppCompatActivity
                 case "POFF":
                     switchPump.setChecked(false);
                     textViewPumpTimeTitle.setText("Насос работал:");
+                    break;
+
+                case "CHON":
+                    switchCHLight.setChecked(true);
+                    break;
+
+                case "CHOFF":
+                    switchCHLight.setChecked(false);
+                    break;
 
                 default:
                     break;
@@ -332,7 +354,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+    public void onPumpCheckedChanged(CompoundButton buttonView, boolean isChecked)
     {
         if (isChecked)
         {
@@ -352,5 +374,17 @@ public class MainActivity extends AppCompatActivity
     public void onClickSwitchGeneralLightInAviary(View view)
     {
         sendDataToServer2("{GLAVIARY}");
+    }
+
+    public void onCHLightCheckedChanged(CompoundButton buttonView, boolean isChecked)
+    {
+        if (isChecked)
+        {
+            sendDataToServer2("{CHON}");
+        }
+        if (!isChecked)
+        {
+            sendDataToServer2("{CHOFF}");
+        }
     }
 }

@@ -136,16 +136,27 @@
                     android:layout_height="831dp"
                     android:layout_weight="1.0">
 
+                    <Switch
+                        android:id="@+id/switchCHLight"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="200dp"
+                        android:text="@string/lightInChickenHouse"
+                        app:layout_constraintBottom_toTopOf="@id/buttonGLAviary"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
                     <Button
                         android:id="@+id/buttonGLAviary"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/canopyLight"
+                        android:layout_marginTop="100dp"
                         android:onClick="onClickSwitchGeneralLightInAviary"
-                        app:layout_constraintTop_toTopOf="parent"
+                        android:text="@string/canopyLight"
                         app:layout_constraintLeft_toLeftOf="parent"
                         app:layout_constraintRight_toRightOf="parent"
-                        app:layout_constraintBottom_toBottomOf="parent" />
+                        app:layout_constraintTop_toBottomOf="@id/switchCHLight" />
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </LinearLayout>
 
